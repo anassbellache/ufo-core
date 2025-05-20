@@ -74,6 +74,22 @@ void UFO_sched_run(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 void UFO_sched_poll(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 
 // -----------------------------------------------------------------------------
+// Added TaskGraph verbs
+// -----------------------------------------------------------------------------
+void UFO_tg_addNode(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_tg_loadFromFile(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_tg_saveToFile(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_tg_listNodes(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_tg_run(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+
+// -----------------------------------------------------------------------------
+// Added Scheduler verbs
+// -----------------------------------------------------------------------------
+void UFO_sched_getResources(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_sched_runAsync(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_sched_stop(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+
+// -----------------------------------------------------------------------------
 // Buffer API
 // -----------------------------------------------------------------------------
 
