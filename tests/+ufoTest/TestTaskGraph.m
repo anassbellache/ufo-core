@@ -1,51 +1,79 @@
 classdef TestTaskGraph < matlab.unittest.TestCase
+    %TESTTASKGRAPH Validate TaskGraph topology rules
+    properties
+        PM  % plugin manager used to create tasks
+    end
+    methods(TestMethodSetup)
+        function createPluginManager(testCase)
+            testCase.PM = ufo.PluginManager();
+        end
+    end
+    methods(TestMethodTeardown)
+        function deletePluginManager(testCase)
+            delete(testCase.PM);
+        end
+    end
     methods(Test)
         function addNodeReturnsZero(testCase)
-            % TG-01: Adding the first node should return id 0
-            pm = ufo.PluginManager();
+            % TG-01: empty graph -> addNode returns node id 0
             tg = ufo.TaskGraph();
-            readTask = pm.getTask("read");
-            nodeId = tg.addNode(readTask);
-            testCase.verifyEqual(nodeId, 0);
+            readTask = testCase.PM.getTask("read");
+            id = tg.addNode(readTask);
+            testCase.verifyEqual(id, uint64(0));
         end
-
         function connectValidNodes(testCase)
-            % TG-02: Connecting two existing nodes succeeds
-            pm = ufo.PluginManager();
+            % TG-02: connecting existing nodes succeeds
             tg = ufo.TaskGraph();
-            id0 = tg.addNode(pm.getTask("read"));
-            id1 = tg.addNode(pm.getTask("write"));
-            tg.connect(id0, id1); % should not error
+            a = testCase.PM.getTask("read");
+            b = testCase.PM.getTask("write");
+            idA = tg.addNode(a);
+            idB = tg.addNode(b);
+            testCase.verifyWarningFree(@() tg.connect(idA, idB));
         end
-
-        function connectSelfEdgeError(testCase)
-            % TG-03: Connecting a node to itself must raise an error
-            pm = ufo.PluginManager();
+        function connectSelfEdgeFails(testCase)
+            % TG-03: connecting a node to itself must raise an error
             tg = ufo.TaskGraph();
-            id0 = tg.addNode(pm.getTask("read"));
-            testCase.verifyError(@() tg.connect(id0, id0), ...
+            a = testCase.PM.getTask("read");
+            id = tg.addNode(a);
+            testCase.verifyError(@() tg.connect(id, id), ...
                 'ufo:TaskGraph:SelfEdge');
         end
-
-        function connectBadSource(testCase)
-            % TG-04: Non-existent source node should trigger BadSrc
-            pm = ufo.PluginManager();
+        function connectBadSrcFails(testCase)
+            % TG-04: source id must exist
             tg = ufo.TaskGraph();
-            id1 = tg.addNode(pm.getTask("write"));
-            testCase.verifyError(@() tg.connect(99, id1), ...
+            a = testCase.PM.getTask("read");
+            tg.addNode(a);
+            testCase.verifyError(@() tg.connect(99, 0), ...
                 'ufo:TaskGraph:BadSrc');
         end
-
-        function validateDetectsCycle(testCase)
-            % TG-06: validate() fails on cyclic graphs
-            pm = ufo.PluginManager();
+        function runNoCycle(testCase)
+            % TG-05: scheduler run should succeed for acyclic graph
             tg = ufo.TaskGraph();
-            a = tg.addNode(pm.getTask("read"));
-            b = tg.addNode(pm.getTask("write"));
-            tg.connect(a, b);
-            tg.connect(b, a); % introduce cycle
-            valid = tg.validate();
-            testCase.verifyFalse(valid);
+            a = testCase.PM.getTask("read");
+            b = testCase.PM.getTask("write");
+            idA = tg.addNode(a);
+            idB = tg.addNode(b);
+            tg.connect(idA, idB);
+            sched = ufo.Scheduler();
+            testCase.verifyWarningFree(@() sched.run(tg));
+        end
+        function detectCycle(testCase)
+            % TG-06: cycle detection should fail validation/run
+            tg = ufo.TaskGraph();
+            a = testCase.PM.getTask("read");
+            b = testCase.PM.getTask("write");
+            idA = tg.addNode(a);
+            idB = tg.addNode(b);
+            tg.connect(idA, idB);
+            tg.connect(idB, idA); % creates cycle
+            if ismethod(tg, 'validate')
+                testCase.verifyError(@() tg.validate(), ...
+                    'ufo:TaskGraph:Cyclic');
+            else
+                sched = ufo.Scheduler();
+                testCase.verifyError(@() sched.run(tg), ...
+                    'ufo:TaskGraph:Cyclic');
+            end
         end
     end
 end
