@@ -40,7 +40,6 @@ set(MEX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/matlab/src")   # <-- adjust here if nee
 set(MEX_SRC
     "${MEX_DIR}/ufo_mex.c"
     "${MEX_DIR}/ufo_commands.c"
-    "${MEX_DIR}/ufo_buffer.c"
     "${MEX_DIR}/mexUfo_handle.c")
 file(GLOB_RECURSE API_HDR   "${CMAKE_CURRENT_SOURCE_DIR}/matlab/include/*.h")
 
