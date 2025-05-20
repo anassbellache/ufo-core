@@ -70,7 +70,13 @@ static DispatchResult dispatch_call(const char *cmd)
     MexFn fn = lookup(cmd);
     if (!fn)
         return UFO_DISPATCH_UNKNOWN_CMD;
-    fn(0, NULL, 0, NULL);
+
+    /* Simulate mexCallMATLAB(cmd, nBytes) */
+    mxArray cmdArr = { cmd };
+    mxArray argArr = { NULL };
+    const mxArray *rhs[2] = { &cmdArr, &argArr };
+
+    fn(0, NULL, 2, rhs);
     return UFO_DISPATCH_OK;
 }
 
