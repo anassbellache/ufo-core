@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
     test_add_node ();
     test_add_max_input_nodes();
     test_add_opencl_fallback();
+    test_add_mex_handle();
 
     g_test_run();
 
