@@ -7,6 +7,7 @@
  */
 
 #include "ufo_mex_api.h"
+#include "ufo.h"
 #include <mex.h>
 #include <glib.h>
 #include <stdint.h>
@@ -161,3 +162,23 @@ UfoTaskGraph     *ufoHandle_getTaskGraph    (const mxArray *arr)
 
 UfoBaseScheduler *ufoHandle_getScheduler    (const mxArray *arr)
 { return UFO_BASE_SCHEDULER (lookup (arr, "scheduler")->obj); }
+
+UfoTask *ufoHandle_getTask (const mxArray *arr)
+{ return UFO_TASK (lookup (arr, "task")->obj); }
+
+UfoResources *ufoHandle_getResources (const mxArray *arr)
+{ return UFO_RESOURCES (lookup (arr, "resources")->obj); }
+
+void mexUfo_handle_init(void)
+{
+    registry_ensure();
+}
+
+void mexUfo_handle_shutdown(void)
+{
+    if (g_registry) {
+        g_hash_table_destroy(g_registry);
+        g_registry = NULL;
+        g_mutex_clear(&g_registry_mtx);
+    }
+}

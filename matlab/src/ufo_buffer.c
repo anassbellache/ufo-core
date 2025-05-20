@@ -10,6 +10,8 @@
  */
 
 #include "ufo_mex_api.h"
+#include "mexUfo_handle.h"
+#include "ufo.h"
 #include <mex.h>
 #include <glib.h>
 #include <string.h>
