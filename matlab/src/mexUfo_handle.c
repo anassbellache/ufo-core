@@ -3,7 +3,7 @@
  * One uint64 key  ↔  one GObject*  (+ type tag string)
  *
  *  – safe on 64-bit MATLAB, O(1) lookup
- *  – automatic final clean-up via mexAtExit
+ *  – automatic final clean-up via explicit init/shutdown
  */
 
 #include "mexUfo_handle.h"
@@ -41,25 +41,16 @@ static void entry_free (gpointer data)
     g_free (e);
 }
 
-static void registry_ensure (void)
+static void registry_ensure(void)
 {
-    if (g_registry) return;
+    if (g_registry)
+        return;
 
-    g_mutex_init (&g_registry_mtx);
-
-    /* Direct hash/equal treat key as pointer-sized scalar – fine on 64-bit */
-    g_registry = g_hash_table_new_full (g_direct_hash,
-                                        g_direct_equal,
-                                        NULL,           /* key not separately allocated */
-                                        entry_free);
-
-    mexAtExit ([]() {                       /* lambda requires C11 / GCC ≥4.9;        */
-        if (g_registry) {                   /* if C99 only, write a static function */
-            g_hash_table_destroy (g_registry);
-            g_registry = NULL;
-            g_mutex_clear (&g_registry_mtx);
-        }
-    });
+    g_mutex_init(&g_registry_mtx);
+    g_registry = g_hash_table_new_full(g_direct_hash,
+                                       g_direct_equal,
+                                       NULL,
+                                       entry_free);
 }
 
 /* ------------------------------------------------------------------ */
@@ -216,3 +207,25 @@ UfoTaskGraph     *ufoHandle_getTaskGraph    (const mxArray *arr)
 
 UfoBaseScheduler *ufoHandle_getScheduler    (const mxArray *arr)
 { return UFO_BASE_SCHEDULER (lookup (arr, "scheduler")->obj); }
+
+UfoTask *ufoHandle_getTask(const mxArray *arr)
+{ return UFO_TASK(lookup(arr, "task")->obj); }
+
+UfoResources *ufoHandle_getResources(const mxArray *arr)
+{ return UFO_RESOURCES(lookup(arr, "resources")->obj); }
+
+/* Init/cleanup ---------------------------------------------------- */
+
+void mexUfo_handle_init(void)
+{
+    registry_ensure();
+}
+
+void mexUfo_handle_shutdown(void)
+{
+    if (!g_registry)
+        return;
+    g_hash_table_destroy(g_registry);
+    g_registry = NULL;
+    g_mutex_clear(&g_registry_mtx);
+}
