@@ -34,7 +34,7 @@ pkg_check_modules(UFO REQUIRED ufo>=0.12)
 # ---------------------------------------------------------------------------
 # 3.  Source lists  ( **updated** )
 # ---------------------------------------------------------------------------
-set(MEX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/matlab/mex")   # <-- adjust here if needed
+set(MEX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/matlab/src")   # <-- adjust here if needed
 
 file(GLOB_RECURSE MEX_SRC   "${MEX_DIR}/*.c")
 file(GLOB_RECURSE API_HDR   "${MEX_DIR}/include/*.h")
