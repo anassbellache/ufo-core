@@ -4,13 +4,14 @@ sources = [
     'test-graph.c',
     'test-node.c',
     'test-profiler.c',
-    'test-max-input-nodes.cpp'
+    'test-max-input-nodes.cpp',
+    'test-mex-handle.c'
 ]
 
 test('unit tests',
     executable('test-suite',
         sources: sources + [enums_h],
-        include_directories: include_dir,
+        include_directories: [include_dir, '../matlab/include'],
         dependencies: deps,
         link_with: lib,
         override_options : ['cpp_std=c++11']
