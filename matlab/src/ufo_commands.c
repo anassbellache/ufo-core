@@ -22,7 +22,7 @@ void UFO_pm_new(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     UfoPluginManager *pm = ufo_plugin_manager_new(&err);
     if (err)
         mexErrMsgIdAndTxt("ufo_mex:PluginManagerNew", "%s", err->message);
-    plhs[0] = createUfoHandle((UFO_Handle)pm, "PluginManager");
+    plhs[0] = ufoHandle_create(pm, "PluginManager");
     if (err) g_error_free(err);
 }
 
@@ -32,21 +32,6 @@ void UFO_pm_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     UfoPluginManager *pm = ufoHandle_getPluginManager(prhs[1]);
     g_object_unref(pm);
     ufoHandle_remove(prhs[1]);
-}
-
-void UFO_pm_listPlugins(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
-    if (nlhs != 1 || nrhs != 2)
-        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_pm_listPlugins: Usage: names = UFO_pm_listPlugins(pm)");
-    UfoPluginManager *pm = ufoHandle_getPluginManager(prhs[1]);
-    GList *list = ufo_plugin_manager_get_all_task_names(pm);
-    guint n = g_list_length(list);
-    plhs[0] = mxCreateCellMatrix(1, n);
-    guint idx = 0;
-    for (GList *l = list; l; l = l->next, ++idx) {
-        mxArray *s = mxCreateString((const char*)l->data);
-        mxSetCell(plhs[0], idx, s);
-    }
-    g_list_free_full(list, g_free);
 }
 
 void UFO_pm_getTask(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
@@ -61,7 +46,7 @@ void UFO_pm_getTask(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) 
     mxFree(name);
     if (err)
         mexErrMsgIdAndTxt("ufo_mex:PluginManagerGetTask", "%s", err->message);
-    plhs[0] = createUfoHandle((UFO_Handle)task, "Task");
+    plhs[0] = ufoHandle_create(task, "Task");
     if (err) g_error_free(err);
 }
 
@@ -74,7 +59,7 @@ void UFO_tg_new(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     UfoTaskGraph *tg = ufo_task_graph_new(&err);
     if (err)
         mexErrMsgIdAndTxt("ufo_mex:TaskGraphNew", "%s", err->message);
-    plhs[0] = createUfoHandle((UFO_Handle)tg, "TaskGraph");
+    plhs[0] = ufoHandle_create(tg, "TaskGraph");
     if (err) g_error_free(err);
 }
 
@@ -108,7 +93,7 @@ void UFO_sched_new(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     UfoBaseScheduler *sched = ufo_scheduler_new(&err);
     if (err)
         mexErrMsgIdAndTxt("ufo_mex:SchedulerNew", "%s", err->message);
-    plhs[0] = createUfoHandle((UFO_Handle)sched, "Scheduler");
+    plhs[0] = ufoHandle_create(sched, "Scheduler");
     if (err) g_error_free(err);
 }
 
@@ -165,7 +150,7 @@ void UFO_buf_new(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     UfoBuffer *buf = ufo_buffer_new(byteCount, &err);
     if (err)
         mexErrMsgIdAndTxt("ufo_mex:BufferNew", "%s", err->message);
-    plhs[0] = createUfoHandle((UFO_Handle)buf, "Buffer");
+    plhs[0] = ufoHandle_create(buf, "Buffer");
     if (err) g_error_free(err);
 }
 
