@@ -26,5 +26,6 @@ void test_add_node (void);
 void test_add_profiler (void);
 void test_add_max_input_nodes(void);
 void test_add_dispatch(void);
+void test_add_mex_handle(void);
 
 #endif
