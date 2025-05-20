@@ -4,7 +4,8 @@ sources = [
     'test-graph.c',
     'test-node.c',
     'test-profiler.c',
-    'test-max-input-nodes.cpp'
+    'test-max-input-nodes.cpp',
+    'test-opencl.c'
 ]
 
 test('unit tests',

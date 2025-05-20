@@ -25,5 +25,6 @@ void test_add_graph (void);
 void test_add_node (void);
 void test_add_profiler (void);
 void test_add_max_input_nodes(void);
+void test_add_opencl_fallback(void);
 
 #endif
