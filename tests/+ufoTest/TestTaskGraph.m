@@ -1,6 +1,4 @@
 classdef TestTaskGraph < matlab.unittest.TestCase
-    %TESTTASKGRAPH Unit tests for ufo.TaskGraph behaviour
-
     methods(Test)
         function addNodeReturnsZero(testCase)
             % TG-01: Adding the first node should return id 0
