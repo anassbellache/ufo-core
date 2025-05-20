@@ -7,11 +7,14 @@ set(TEST_SRCS
     test-node.c
     test-profiler.c
     test-max-input-nodes.cpp
+    test-dispatch.c
+    test-mex-handle.c
     )
 
 set(SUITE_BIN "test-suite")
 
 add_executable(${SUITE_BIN} ${TEST_SRCS})
+target_include_directories(${SUITE_BIN} PRIVATE ${CMAKE_SOURCE_DIR}/matlab/include)
 
 set_property(TARGET ${SUITE_BIN} PROPERTY CXX_STANDARD 11)
 set_property(TARGET ${SUITE_BIN} PROPERTY CXX_STANDARD_REQUIRED ON)
