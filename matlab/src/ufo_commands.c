@@ -1,6 +1,17 @@
 #include "ufo_mex_api.h"
+#include "mexUfo_handle.h"
 #include <glib.h>
 #include <mex.h>
+
+/* Helper converting UfoTaskGraphReport -> MATLAB struct
+   This is a minimal placeholder as the detailed struct
+   definition is not exposed in these bindings. */
+static mxArray *convertReportsToMx(gpointer rep)
+{
+    (void) rep;
+    const char *fields[] = { NULL };
+    return mxCreateStructMatrix(1, 0, 0, fields);
+}
 
 // --------------- PluginManager Commands ---------------
 

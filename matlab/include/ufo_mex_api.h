@@ -29,6 +29,10 @@ void UFO_pm_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 ///  t = ufo_mex('pm_getTask', h, taskName);
 void UFO_pm_getTask(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 
+/// UFO_pm_listPlugins()
+///  names = ufo_mex('pm_listPlugins', h);
+void UFO_pm_listPlugins(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+
 // -----------------------------------------------------------------------------
 // TaskGraph API
 // -----------------------------------------------------------------------------
