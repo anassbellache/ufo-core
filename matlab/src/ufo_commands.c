@@ -34,6 +34,27 @@ void UFO_pm_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     ufoHandle_remove(prhs[1]);
 }
 
+void UFO_pm_listPlugins(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    if (nlhs != 1 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_pm_listPlugins: Usage: names = UFO_pm_listPlugins(pm)");
+
+    UfoPluginManager *pm = ufoHandle_getPluginManager(prhs[1]);
+
+    GList *names = ufo_plugin_manager_get_all_task_names(pm);
+    const guint count = g_list_length(names);
+
+    plhs[0] = mxCreateCellMatrix(1, count);
+
+    guint idx = 0;
+    for (GList *l = names; l != NULL; l = l->next, ++idx) {
+        const char *name = (const char *) l->data;
+        mxArray *s = mxCreateString(name);
+        mxSetCell(plhs[0], idx, s);
+    }
+
+    g_list_free_full(names, g_free);
+}
+
 void UFO_pm_getTask(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     if (nlhs != 1 || nrhs != 3)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_pm_getTask: Usage: task = UFO_pm_getTask(pmHandle, taskName)");
