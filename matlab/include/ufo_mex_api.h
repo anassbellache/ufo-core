@@ -29,6 +29,10 @@ void UFO_pm_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 ///  t = ufo_mex('pm_getTask', h, taskName);
 void UFO_pm_getTask(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 
+/// UFO_pm_listPlugins()
+///  names = ufo_mex('pm_listPlugins', h);
+void UFO_pm_listPlugins(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+
 // -----------------------------------------------------------------------------
 // TaskGraph API
 // -----------------------------------------------------------------------------
@@ -70,6 +74,22 @@ void UFO_sched_run(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 void UFO_sched_poll(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 
 // -----------------------------------------------------------------------------
+// Added TaskGraph verbs
+// -----------------------------------------------------------------------------
+void UFO_tg_addNode(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_tg_loadFromFile(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_tg_saveToFile(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_tg_listNodes(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_tg_run(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+
+// -----------------------------------------------------------------------------
+// Added Scheduler verbs
+// -----------------------------------------------------------------------------
+void UFO_sched_getResources(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_sched_runAsync(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_sched_stop(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+
+// -----------------------------------------------------------------------------
 // Buffer API
 // -----------------------------------------------------------------------------
 
@@ -90,13 +110,6 @@ void UFO_buf_getData(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 void UFO_buf_getSize(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 
 // -----------------------------------------------------------------------------
-// Utilities
-// -----------------------------------------------------------------------------
-
-/// createUfoHandle()
-///    Allocate a MATLAB uint64 scalar wrapping a UFO_Handle,
-///    and assign it className via setClassName on the mxArray.
-mxArray* createUfoHandle(UFO_Handle handle, const char* className);
 
 // -----------------------------------------------------------------------------
 // MEX Gateway
