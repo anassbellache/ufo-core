@@ -84,6 +84,39 @@ void UFO_tg_connect(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) 
     if (err) g_error_free(err);
 }
 
+void UFO_tg_addNode(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (nlhs != 1 || nrhs != 3)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_addNode: Usage: id = UFO_tg_addNode(tg, task)");
+    plhs[0] = mxCreateDoubleScalar(0);
+}
+
+void UFO_tg_loadFromFile(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (nlhs != 0 || nrhs != 3)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_loadFromFile: Usage: UFO_tg_loadFromFile(tg, filename)");
+}
+
+void UFO_tg_saveToFile(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (nlhs != 0 || nrhs != 3)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_saveToFile: Usage: UFO_tg_saveToFile(tg, filename)");
+}
+
+void UFO_tg_listNodes(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (nlhs != 1 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_listNodes: Usage: names = UFO_tg_listNodes(tg)");
+    plhs[0] = mxCreateCellMatrix(0,0);
+}
+
+void UFO_tg_run(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (nlhs > 1 || nrhs != 3)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_run: Usage: result = UFO_tg_run(tg, sched)");
+    plhs[0] = mxCreateDoubleScalar(0);
+}
+
 // --------------- Scheduler Commands ---------------
 
 void UFO_sched_new(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
@@ -136,6 +169,26 @@ void UFO_sched_poll(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) 
         mexErrMsgIdAndTxt("ufo_mex:SchedulerPoll", "%s", err->message);
     plhs[0] = convertReportsToMx(rep);
     if (err) g_error_free(err);
+}
+
+void UFO_sched_getResources(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (nlhs != 1 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_sched_getResources: Usage: res = UFO_sched_getResources(sched)");
+    plhs[0] = mxCreateDoubleScalar(0);
+}
+
+void UFO_sched_runAsync(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (nlhs != 1 || nrhs != 3)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_sched_runAsync: Usage: fut = UFO_sched_runAsync(sched, tg)");
+    plhs[0] = mxCreateDoubleScalar(0);
+}
+
+void UFO_sched_stop(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (nlhs != 0 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_sched_stop: Usage: UFO_sched_stop(sched)");
 }
 
 // --------------- Buffer Commands ---------------
