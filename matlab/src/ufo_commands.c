@@ -4,6 +4,16 @@
 #include <glib.h>
 #include <mex.h>
 
+/* Helper converting UfoTaskGraphReport -> MATLAB struct
+   This is a minimal placeholder as the detailed struct
+   definition is not exposed in these bindings. */
+static mxArray *convertReportsToMx(gpointer rep)
+{
+    (void) rep;
+    const char *fields[] = { NULL };
+    return mxCreateStructMatrix(1, 0, 0, fields);
+}
+
 // --------------- PluginManager Commands ---------------
 
 void UFO_pm_new(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
@@ -23,6 +33,21 @@ void UFO_pm_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     UfoPluginManager *pm = ufoHandle_getPluginManager(prhs[1]);
     g_object_unref(pm);
     ufoHandle_remove(prhs[1]);
+}
+
+void UFO_pm_listPlugins(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    if (nlhs != 1 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_pm_listPlugins: Usage: names = UFO_pm_listPlugins(pm)");
+    UfoPluginManager *pm = ufoHandle_getPluginManager(prhs[1]);
+    GList *list = ufo_plugin_manager_get_all_task_names(pm);
+    guint n = g_list_length(list);
+    plhs[0] = mxCreateCellMatrix(1, n);
+    guint idx = 0;
+    for (GList *l = list; l; l = l->next, ++idx) {
+        mxArray *s = mxCreateString((const char*)l->data);
+        mxSetCell(plhs[0], idx, s);
+    }
+    g_list_free_full(list, g_free);
 }
 
 void UFO_pm_getTask(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
