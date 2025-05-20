@@ -5,6 +5,7 @@ sources = [
     'test-node.c',
     'test-profiler.c',
     'test-max-input-nodes.cpp',
+    'test-handle-concurrency.c'
     'test-opencl.c'
     'test-mex-handle.c'
 ]
