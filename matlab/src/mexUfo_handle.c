@@ -6,9 +6,11 @@
  *  – automatic final clean-up via mexAtExit
  */
 
+#include "mexUfo_handle.h"
 #include "ufo_mex_api.h"
 #include <mex.h>
 #include <glib.h>
+#include <inttypes.h>
 #include <stdint.h>
 
 /* ------------------------------------------------------------------ */
@@ -149,7 +151,22 @@ static HandleEntry *lookup (const mxArray *arr,
     return e;
 }
 
-/* Typed getters – exported in ufo_mex_api.h */
+/* Public API */
+void mexUfo_handle_init(void)
+{
+    registry_ensure();
+}
+
+void mexUfo_handle_shutdown(void)
+{
+    if (g_registry) {
+        g_hash_table_destroy(g_registry);
+        g_registry = NULL;
+        g_mutex_clear(&g_registry_mtx);
+    }
+}
+
+/* Typed getters */
 UfoBuffer        *ufoHandle_getBuffer       (const mxArray *arr)
 { return UFO_BUFFER (lookup (arr, "buffer")->obj); }
 
@@ -161,3 +178,9 @@ UfoTaskGraph     *ufoHandle_getTaskGraph    (const mxArray *arr)
 
 UfoBaseScheduler *ufoHandle_getScheduler    (const mxArray *arr)
 { return UFO_BASE_SCHEDULER (lookup (arr, "scheduler")->obj); }
+
+UfoTask *ufoHandle_getTask(const mxArray *arr)
+{ return UFO_TASK (lookup (arr, "task")->obj); }
+
+UfoResources *ufoHandle_getResources(const mxArray *arr)
+{ return UFO_RESOURCES (lookup (arr, "resources")->obj); }

@@ -4,6 +4,7 @@
 
 #include <mex.h>
 #include <stdint.h>
+#include "mexUfo_handle.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,15 +89,6 @@ void UFO_buf_getData(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 /// UFO_buf_getSize()
 ///  [nBytes] = ufo_mex('buf_getSize', buf);
 void UFO_buf_getSize(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
-
-// -----------------------------------------------------------------------------
-// Utilities
-// -----------------------------------------------------------------------------
-
-/// createUfoHandle()
-///    Allocate a MATLAB uint64 scalar wrapping a UFO_Handle,
-///    and assign it className via setClassName on the mxArray.
-mxArray* createUfoHandle(UFO_Handle handle, const char* className);
 
 // -----------------------------------------------------------------------------
 // MEX Gateway
