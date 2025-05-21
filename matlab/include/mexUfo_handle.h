@@ -28,6 +28,8 @@ UfoBuffer        *ufoHandle_getBuffer(const mxArray *arr);
 UfoPluginManager *ufoHandle_getPluginManager(const mxArray *arr);
 UfoTaskGraph     *ufoHandle_getTaskGraph(const mxArray *arr);
 UfoBaseScheduler *ufoHandle_getScheduler(const mxArray *arr);
+UfoTask          *ufoHandle_getTask(const mxArray *arr);
+UfoResources     *ufoHandle_getResources(const mxArray *arr);
 #ifdef __cplusplus
 }
 #endif

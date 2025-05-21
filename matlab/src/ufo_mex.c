@@ -13,9 +13,6 @@ typedef struct {
 
 // --- Static helpers ---
 
-static void on_exit(void) {
-    mexUfo_handle_shutdown();
-}
 
 // Returns pointer to function for verb, or NULL if not found (binary search)
 static mexFunctionPtr find_verb(const char *name) {
@@ -72,7 +69,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     if (!initialised) {
         mexLock();
         mexUfo_handle_init();
-        mexAtExit(on_exit);
         initialised = true;
     }
 
