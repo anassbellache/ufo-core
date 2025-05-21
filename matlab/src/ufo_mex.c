@@ -28,18 +28,26 @@ static mexFunctionPtr find_verb(const char *name) {
         {"Buffer_new",         UFO_buf_new},
         {"PluginManager_free", UFO_pm_delete},
         {"PluginManager_getTask", UFO_pm_getTask},
-        {"PluginManager_listPlugins", NULL}, // Not implemented, placeholder
+        {"PluginManager_listPlugins", UFO_pm_listPlugins},
         {"PluginManager_new",  UFO_pm_new},
         {"Scheduler_delete",   UFO_sched_delete},
         {"Scheduler_free",     UFO_sched_delete}, // alias
+        {"Scheduler_getResources", UFO_sched_getResources},
         {"Scheduler_new",      UFO_sched_new},
         {"Scheduler_poll",     UFO_sched_poll},
         {"Scheduler_run",      UFO_sched_run},
+        {"Scheduler_runAsync", UFO_sched_runAsync},
         {"Scheduler_setResources", UFO_sched_setResources},
+        {"Scheduler_stop",     UFO_sched_stop},
+        {"TaskGraph_addNode",  UFO_tg_addNode},
         {"TaskGraph_connect",  UFO_tg_connect},
         {"TaskGraph_delete",   UFO_tg_delete},
         {"TaskGraph_free",     UFO_tg_delete}, // alias
+        {"TaskGraph_listNodes",UFO_tg_listNodes},
+        {"TaskGraph_loadFromFile", UFO_tg_loadFromFile},
         {"TaskGraph_new",      UFO_tg_new},
+        {"TaskGraph_run",      UFO_tg_run},
+        {"TaskGraph_saveToFile", UFO_tg_saveToFile},
         {"mexVersion",         NULL}
     };
     const size_t n = sizeof(table)/sizeof(table[0]);

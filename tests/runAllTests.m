@@ -1,4 +1,5 @@
 import matlab.unittest.TestSuite;
-addpath(fullfile(fileparts(mfilename('fullpath')), '..'));  % add +ufo
+testRoot = fileparts(mfilename('fullpath'));
+addpath(fullfile(testRoot, '..', 'matlab'));    % add +ufo package
 results = run(TestSuite.fromPackage('ufoTest','IncludeSubpackages',true));
 assertSuccess(results);
