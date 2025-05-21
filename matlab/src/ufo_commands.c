@@ -1,4 +1,5 @@
 #include "ufo_mex_api.h"
+#include "mexUfo_handle.h"
 #include <glib.h>
 #include <mex.h>
 
@@ -166,4 +167,33 @@ void UFO_buf_getSize(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_buf_getSize: Usage: sz = UFO_buf_getSize(bufHandle)");
     UfoBuffer *buf = getUfoHandle_Buffer(prhs[1]);
     plhs[0] = mxCreateDoubleScalar((double)ufo_buffer_get_size(buf));
+}
+
+// --------------- Task / Resources Commands ---------------
+
+void UFO_task_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    if (nlhs != 0 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_task_delete(task)");
+    UfoTask *task = getUfoHandle_Task(prhs[1]);
+    g_object_unref(task);
+    removeHandle(prhs[1]);
+}
+
+void UFO_res_new(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    if (nlhs != 1 || nrhs != 1)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_res_new()");
+    GError *err = NULL;
+    UfoResources *res = ufo_resources_new(&err);
+    if (err)
+        mexErrMsgIdAndTxt("ufo_mex:ResourcesNew", "%s", err->message);
+    plhs[0] = createUfoHandle((UFO_Handle)res, "resources");
+    if (err) g_error_free(err);
+}
+
+void UFO_res_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    if (nlhs != 0 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_res_delete(res)");
+    UfoResources *res = getUfoHandle_Resources(prhs[1]);
+    g_object_unref(res);
+    removeHandle(prhs[1]);
 }

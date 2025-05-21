@@ -30,12 +30,15 @@ static mexFunctionPtr find_verb(const char *name) {
         {"PluginManager_getTask", UFO_pm_getTask},
         {"PluginManager_listPlugins", NULL}, // Not implemented, placeholder
         {"PluginManager_new",  UFO_pm_new},
+        {"Resources_delete",   UFO_res_delete},
+        {"Resources_new",      UFO_res_new},
         {"Scheduler_delete",   UFO_sched_delete},
         {"Scheduler_free",     UFO_sched_delete}, // alias
         {"Scheduler_new",      UFO_sched_new},
         {"Scheduler_poll",     UFO_sched_poll},
         {"Scheduler_run",      UFO_sched_run},
         {"Scheduler_setResources", UFO_sched_setResources},
+        {"Task_delete",        UFO_task_delete},
         {"TaskGraph_connect",  UFO_tg_connect},
         {"TaskGraph_delete",   UFO_tg_delete},
         {"TaskGraph_free",     UFO_tg_delete}, // alias

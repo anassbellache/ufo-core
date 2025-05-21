@@ -90,6 +90,14 @@ void UFO_buf_getData(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 void UFO_buf_getSize(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
 
 // -----------------------------------------------------------------------------
+// Task & Resources API
+// -----------------------------------------------------------------------------
+
+void UFO_task_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_res_new(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+void UFO_res_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]);
+
+// -----------------------------------------------------------------------------
 // Utilities
 // -----------------------------------------------------------------------------
 
