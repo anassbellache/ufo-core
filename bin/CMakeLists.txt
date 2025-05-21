@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.5)
 
 #{{{ Binaries
 add_executable(ufo-launch ufo-launch.c)
