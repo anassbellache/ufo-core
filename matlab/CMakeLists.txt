@@ -34,14 +34,16 @@ pkg_check_modules(UFO REQUIRED ufo>=0.12)
 # ---------------------------------------------------------------------------
 # 3.  Source lists  ( **updated** )
 # ---------------------------------------------------------------------------
-set(MEX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/matlab/src")   # <-- adjust here if needed
+set(MEX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/matlab/src")
 
-
-set(MEX_SRC
-    "${MEX_DIR}/ufo_mex.c"
-    "${MEX_DIR}/ufo_commands.c"
-    "${MEX_DIR}/mexUfo_handle.c")
+file(GLOB_RECURSE MEX_SRC   "${MEX_DIR}/*.c")
 file(GLOB_RECURSE API_HDR   "${CMAKE_CURRENT_SOURCE_DIR}/matlab/include/*.h")
+
+if (MEX_SRC STREQUAL "")
+    message(FATAL_ERROR
+        "No .c source files found in ${MEX_DIR}. "
+        "Make sure the MATLAB bindings live there or update MEX_DIR.")
+endif()
 
 # ---------------------------------------------------------------------------
 # 4.  Build the MEX gateway (libufo_mex.${Matlab_MEX_EXTENSION})
