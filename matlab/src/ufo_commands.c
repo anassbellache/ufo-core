@@ -1,6 +1,22 @@
 #include "ufo_mex_api.h"
+#include "mexUfo_handle.h"
+#include <ufo/ufo-plugin-manager.h>
+#include <ufo/ufo-task-graph.h>
+#include <ufo/ufo-buffer.h>
+#include <ufo/ufo-base-scheduler.h>
+#include <ufo/ufo-resources.h>
+#include <ufo/ufo-task.h>
 #include <glib.h>
 #include <mex.h>
+
+typedef struct _UfoTaskGraphReport UfoTaskGraphReport;
+
+/* helper: convert scheduler report to MATLAB struct (placeholder) */
+static mxArray *convertReportsToMx(UfoTaskGraphReport *rep)
+{
+    (void) rep;
+    return mxCreateStructMatrix(0, 0, 0, NULL);
+}
 
 // --------------- PluginManager Commands ---------------
 
@@ -37,6 +53,25 @@ void UFO_pm_getTask(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) 
         mexErrMsgIdAndTxt("ufo_mex:PluginManagerGetTask", "%s", err->message);
     plhs[0] = createUfoHandle((UFO_Handle)task, "Task");
     if (err) g_error_free(err);
+}
+
+void PluginManager_list_mex(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+    if (nlhs != 1 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "Usage: PluginManager_listPlugins(pm)");
+
+    UfoPluginManager *pm = getUfoHandle_PluginManager(prhs[1]);
+    GList *names = ufo_plugin_manager_get_all_task_names(pm);
+    int count = g_list_length(names);
+    mxArray *cell = mxCreateCellMatrix(1, count);
+    int i = 0;
+    for (GList *l = names; l != NULL; l = l->next, ++i) {
+        const char *name = (const char *) l->data;
+        mxArray *s = mxCreateString(name);
+        mxSetCell(cell, i, s);
+    }
+    g_list_free_full(names, g_free);
+    plhs[0] = cell;
 }
 
 // --------------- TaskGraph Commands ---------------

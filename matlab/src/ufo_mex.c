@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+/* forward declaration from ufo_commands.c */
+void PluginManager_list_mex(int, mxArray **, int, const mxArray **);
+
 typedef void (*mexFunctionPtr)(int, mxArray **, int, const mxArray **);
 
 typedef struct {
@@ -28,7 +31,7 @@ static mexFunctionPtr find_verb(const char *name) {
         {"Buffer_new",         UFO_buf_new},
         {"PluginManager_free", UFO_pm_delete},
         {"PluginManager_getTask", UFO_pm_getTask},
-        {"PluginManager_listPlugins", NULL}, // Not implemented, placeholder
+        {"PluginManager_listPlugins", PluginManager_list_mex},
         {"PluginManager_new",  UFO_pm_new},
         {"Scheduler_delete",   UFO_sched_delete},
         {"Scheduler_free",     UFO_sched_delete}, // alias
