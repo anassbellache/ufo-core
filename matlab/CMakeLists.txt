@@ -40,12 +40,11 @@ set(MEX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 file(GLOB_RECURSE MEX_SRC   "${MEX_DIR}/*.c")
 file(GLOB_RECURSE API_HDR   "${MEX_INC_DIR}/*.h")
 
-# Abort early with a clear message if we glob the wrong place
 if (MEX_SRC STREQUAL "")
     message(FATAL_ERROR
         "No .c source files found in ${MEX_DIR}. "
         "Make sure the MATLAB bindings live there or update MEX_DIR.")
-endif ()
+endif()
 
 # ---------------------------------------------------------------------------
 # 4.  Build the MEX gateway (libufo_mex.${Matlab_MEX_EXTENSION})
