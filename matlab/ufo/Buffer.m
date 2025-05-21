@@ -17,7 +17,7 @@ classdef Buffer < handle
 
     %% Construction / destruction
     methods
-        function obj = Buffer(arg)
+        function obj = Buffer(varargin)
             %BUFFER  Construct new or wrap existing UfoBuffer
             %
             %   ufo.Buffer()          – allocate an empty buffer
@@ -26,25 +26,30 @@ classdef Buffer < handle
             %   ufo.Buffer(uint64 H)  – wrap an existing native handle
 
             if nargin == 0
-                % create an empty buffer
-                nbytes = 0;
-                obj.Handle = ufo_mex('Buffer_new', nbytes);
-            elseif isa(arg, 'uint64')
+                % create an empty buffer (size can be provided via varargin)
+                dims = [];
+            else
+                dims = varargin{1};
+            end
+
+            if nargin > 0 && isa(dims, 'uint64')
                 % wrap existing handle
                 arguments
-                    arg (1,1) {mustBeNumeric, mustBeFinite, mustBePositive}
+                    dims (1,1) {mustBeNumeric, mustBeFinite, mustBePositive}
                 end
-                obj.Handle = uint64(arg);
+                obj.Handle = uint64(dims);
             else
                 % treat argument as byte count or dimension vector
                 arguments
-                    arg {mustBeNumeric, mustBeFinite, mustBeNonnegative}
+                    dims {mustBeNumeric, mustBeFinite, mustBeNonnegative}
                 end
 
-                if isscalar(arg)
-                    nbytes = double(arg);
+                if isempty(dims)
+                    nbytes = 0;
+                elseif isscalar(dims)
+                    nbytes = double(dims);
                 else
-                    nbytes = prod(double(arg));
+                    nbytes = prod(double(dims));
                 end
                 obj.Handle = ufo_mex('Buffer_new', nbytes);
             end
