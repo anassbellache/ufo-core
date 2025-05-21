@@ -2,6 +2,8 @@
 #include "mexUfo_handle.h"
 #include <glib.h>
 #include <mex.h>
+#include <ufo/ufo-task-node.h>
+#include <inttypes.h>
 
 /* Helper converting UfoTaskGraphReport -> MATLAB struct
    This is a minimal placeholder as the detailed struct
@@ -11,6 +13,56 @@ static mxArray *convertReportsToMx(gpointer rep)
     (void) rep;
     const char *fields[] = { NULL };
     return mxCreateStructMatrix(1, 0, 0, fields);
+}
+
+/* Retrieve or create the task list associated with a TaskGraph */
+static GPtrArray *
+ensure_task_array(UfoTaskGraph *tg)
+{
+    GPtrArray *arr = g_object_get_data(G_OBJECT(tg), "mex_tasks");
+    if (!arr) {
+        arr = g_ptr_array_new_with_free_func(g_object_unref);
+        g_object_set_data_full(G_OBJECT(tg), "mex_tasks", arr,
+                              (GDestroyNotify) g_ptr_array_unref);
+    }
+    return arr;
+}
+
+/* Resolve a task argument (handle, id, or name) */
+static UfoTask *
+resolve_task_arg(UfoTaskGraph *tg, const mxArray *arg)
+{
+    if (mxIsUint64(arg)) {
+        uint64_t id = *(uint64_t *) mxGetData(arg);
+        gpointer obj = ufo_handle_lookup(id, "task");
+        if (obj)
+            return UFO_TASK(obj);
+
+        GPtrArray *arr = g_object_get_data(G_OBJECT(tg), "mex_tasks");
+        if (!arr || id >= arr->len)
+            mexErrMsgIdAndTxt("ufo_mex:BadNodeId", "Invalid node id %" PRIu64, id);
+        return g_ptr_array_index(arr, id);
+    }
+    else if (mxIsChar(arg)) {
+        char *name = mxArrayToString(arg);
+        GPtrArray *arr = g_object_get_data(G_OBJECT(tg), "mex_tasks");
+        if (!arr) {
+            mxFree(name);
+            mexErrMsgIdAndTxt("ufo_mex:NoNodes", "TaskGraph contains no nodes");
+        }
+        for (guint i = 0; i < arr->len; i++) {
+            UfoTask *t = g_ptr_array_index(arr, i);
+            const char *idname = ufo_task_node_get_identifier(UFO_TASK_NODE(t));
+            if (idname && g_strcmp0(idname, name) == 0) {
+                mxFree(name);
+                return t;
+            }
+        }
+        mexErrMsgIdAndTxt("ufo_mex:UnknownNode", "Node '%s' not found", name);
+    }
+
+    mexErrMsgIdAndTxt("ufo_mex:BadArg", "Endpoint must be uint64 or string");
+    return NULL; /* never reached */
 }
 
 // --------------- PluginManager Commands ---------------
@@ -96,10 +148,10 @@ void UFO_tg_connect(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) 
     if (nlhs != 0 || nrhs != 4)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_connect: Usage: UFO_tg_connect(tg, srcTask, dstTask)");
     UfoTaskGraph *tg = ufoHandle_getTaskGraph(prhs[1]);
-    UfoTask *src = ufoHandle_getTask(prhs[2]);
-    UfoTask *dst = ufoHandle_getTask(prhs[3]);
+    UfoTask *src = resolve_task_arg(tg, prhs[2]);
+    UfoTask *dst = resolve_task_arg(tg, prhs[3]);
     GError *err = NULL;
-    ufo_task_graph_connect_nodes(tg, src, dst, &err);
+    ufo_task_graph_connect_nodes(tg, UFO_TASK_NODE(src), UFO_TASK_NODE(dst), &err);
     if (err)
         mexErrMsgIdAndTxt("ufo_mex:TaskGraphConnect", "%s", err->message);
     if (err) g_error_free(err);
@@ -109,33 +161,58 @@ void UFO_tg_addNode(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nlhs != 1 || nrhs != 3)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_addNode: Usage: id = UFO_tg_addNode(tg, task)");
-    plhs[0] = mxCreateDoubleScalar(0);
+    UfoTaskGraph *tg = ufoHandle_getTaskGraph(prhs[1]);
+    UfoTask *task = ufoHandle_getTask(prhs[2]);
+    GPtrArray *arr = ensure_task_array(tg);
+    g_ptr_array_add(arr, g_object_ref(task));
+    uint64_t id = arr->len - 1;
+    plhs[0] = mxCreateNumericMatrix(1,1,mxUINT64_CLASS,mxREAL);
+    *(uint64_t*)mxGetData(plhs[0]) = id;
 }
 
 void UFO_tg_loadFromFile(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nlhs != 0 || nrhs != 3)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_loadFromFile: Usage: UFO_tg_loadFromFile(tg, filename)");
+    mexErrMsgIdAndTxt("ufo_mex:NotImplemented", "TaskGraph_loadFromFile not implemented");
 }
 
 void UFO_tg_saveToFile(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nlhs != 0 || nrhs != 3)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_saveToFile: Usage: UFO_tg_saveToFile(tg, filename)");
+    mexErrMsgIdAndTxt("ufo_mex:NotImplemented", "TaskGraph_saveToFile not implemented");
 }
 
 void UFO_tg_listNodes(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nlhs != 1 || nrhs != 2)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_listNodes: Usage: names = UFO_tg_listNodes(tg)");
-    plhs[0] = mxCreateCellMatrix(0,0);
+    UfoTaskGraph *tg = ufoHandle_getTaskGraph(prhs[1]);
+    GPtrArray *arr = g_object_get_data(G_OBJECT(tg), "mex_tasks");
+    guint count = arr ? arr->len : 0;
+    plhs[0] = mxCreateCellMatrix(1, count);
+    for (guint i = 0; i < count; i++) {
+        UfoTask *t = g_ptr_array_index(arr, i);
+        const char *name = ufo_task_node_get_identifier(UFO_TASK_NODE(t));
+        if (!name) name = "";
+        mxSetCell(plhs[0], i, mxCreateString(name));
+    }
 }
 
 void UFO_tg_run(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nlhs > 1 || nrhs != 3)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_tg_run: Usage: result = UFO_tg_run(tg, sched)");
-    plhs[0] = mxCreateDoubleScalar(0);
+    UfoTaskGraph *tg = ufoHandle_getTaskGraph(prhs[1]);
+    UfoBaseScheduler *sched = ufoHandle_getScheduler(prhs[2]);
+    GError *err = NULL;
+    ufo_base_scheduler_run(sched, tg, &err);
+    if (err)
+        mexErrMsgIdAndTxt("ufo_mex:TaskGraphRun", "%s", err->message);
+    if (nlhs == 1)
+        plhs[0] = mxCreateDoubleScalar(0);
+    if (err) g_error_free(err);
 }
 
 // --------------- Scheduler Commands ---------------
@@ -196,20 +273,28 @@ void UFO_sched_getResources(int nlhs, mxArray *plhs[], int nrhs, const mxArray *
 {
     if (nlhs != 1 || nrhs != 2)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_sched_getResources: Usage: res = UFO_sched_getResources(sched)");
-    plhs[0] = mxCreateDoubleScalar(0);
+    UfoBaseScheduler *sched = ufoHandle_getScheduler(prhs[1]);
+    GError *err = NULL;
+    UfoResources *res = ufo_base_scheduler_get_resources(sched, &err);
+    if (err)
+        mexErrMsgIdAndTxt("ufo_mex:SchedulerGetResources", "%s", err->message);
+    plhs[0] = ufoHandle_create(res, "Resources");
+    if (err) g_error_free(err);
 }
 
 void UFO_sched_runAsync(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nlhs != 1 || nrhs != 3)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_sched_runAsync: Usage: fut = UFO_sched_runAsync(sched, tg)");
-    plhs[0] = mxCreateDoubleScalar(0);
+    mexErrMsgIdAndTxt("ufo_mex:NotImplemented", "Scheduler_runAsync not implemented");
 }
 
 void UFO_sched_stop(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
     if (nlhs != 0 || nrhs != 2)
         mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_sched_stop: Usage: UFO_sched_stop(sched)");
+    UfoBaseScheduler *sched = ufoHandle_getScheduler(prhs[1]);
+    ufo_base_scheduler_abort(sched);
 }
 
 // --------------- Buffer Commands ---------------
