@@ -134,6 +134,23 @@ mxArray *ufoHandle_create (gpointer obj, const char *type_name)
     return arr;
 }
 
+/* Wrap an existing uint64 handle into a MATLAB mxArray and tag it with a
+   MATLAB class name.  This does not allocate or reference a GObject; it only
+   packages the handle value for return to the caller. */
+mxArray *ufoHandle_wrap(UFO_Handle id, const char *class_name)
+{
+    mxArray *arr = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
+    if (!arr)
+        mexErrMsgIdAndTxt("ufo_mex:AllocFailed",
+                          "Failed to allocate MATLAB handle.");
+
+    *(uint64_t *) mxGetData(arr) = id;
+    if (class_name && class_name[0] != '\0')
+        mxSetClassName(arr, class_name);
+
+    return arr;
+}
+
 /* Remove & unref */
 void ufoHandle_remove (const mxArray *arr)
 {

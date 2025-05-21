@@ -23,6 +23,7 @@ extern gboolean ufo_handle_test_force_alloc_fail;
 
 /* MATLAB convenience wrappers */
 mxArray *ufoHandle_create(gpointer obj, const char *type_name);
+mxArray *ufoHandle_wrap(UFO_Handle id, const char *class_name);
 void     ufoHandle_remove(const mxArray *arr);
 UfoBuffer        *ufoHandle_getBuffer(const mxArray *arr);
 UfoPluginManager *ufoHandle_getPluginManager(const mxArray *arr);
