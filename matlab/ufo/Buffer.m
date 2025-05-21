@@ -1,7 +1,9 @@
 classdef Buffer < handle
 %BUFFER  MATLAB wrapper of a UFO-Core UfoBuffer
 %
-%   buf = ufo.Buffer()                % create an *empty* GPU/host buffer
+%   buf = ufo.Buffer()                % create an empty GPU/host buffer
+%   buf = ufo.Buffer(nBytes)          % allocate buffer of given byte size
+%   buf = ufo.Buffer(dims)            % allocate buffer with product(dims) bytes
 %   buf = ufo.Buffer(h)               % wrap existing uint64 handle
 %   sz  = buf.getSize()               % bytes in buffer
 %   A   = buf.getData()               % MATLAB array copy of the data
@@ -15,19 +17,41 @@ classdef Buffer < handle
 
     %% Construction / destruction
     methods
-        function obj = Buffer(handle)
+        function obj = Buffer(varargin)
             %BUFFER  Construct new or wrap existing UfoBuffer
             %
-            %   ufo.Buffer()            – allocate a fresh buffer via UFO-Core
-            %   ufo.Buffer(uint64 H)    – wrap an existing native handle
+            %   ufo.Buffer()          – allocate an empty buffer
+            %   ufo.Buffer(N)         – allocate buffer with N bytes
+            %   ufo.Buffer(DIMS)      – allocate buffer of prod(DIMS) bytes
+            %   ufo.Buffer(uint64 H)  – wrap an existing native handle
 
-            if nargin == 0          % new buffer
-                obj.Handle = ufo_mex('Buffer_new');
-            else                    % wrap existing handle
+            if nargin == 0
+                % create an empty buffer (size can be provided via varargin)
+                dims = [];
+            else
+                dims = varargin{1};
+            end
+
+            if nargin > 0 && isa(dims, 'uint64')
+                % wrap existing handle
                 arguments
-                    handle (1,1) {mustBeNumeric, mustBeFinite, mustBePositive}
+                    dims (1,1) {mustBeNumeric, mustBeFinite, mustBePositive}
                 end
-                obj.Handle = uint64(handle);
+                obj.Handle = uint64(dims);
+            else
+                % treat argument as byte count or dimension vector
+                arguments
+                    dims {mustBeNumeric, mustBeFinite, mustBeNonnegative}
+                end
+
+                if isempty(dims)
+                    nbytes = 0;
+                elseif isscalar(dims)
+                    nbytes = double(dims);
+                else
+                    nbytes = prod(double(dims));
+                end
+                obj.Handle = ufo_mex('Buffer_new', nbytes);
             end
 
             if obj.Handle == 0

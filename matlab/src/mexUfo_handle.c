@@ -9,7 +9,8 @@
 #include "ufo_mex_api.h"
 #include "mexUfo_handle.h"
 #include <mex.h>
-#include <glib.h>
+#include <glib-object.h>
+#include <errno.h>
 #include <stdint.h>
 #include <inttypes.h>
 
@@ -25,6 +26,7 @@ typedef struct {
 static GHashTable *g_registry  = NULL;
 static GMutex      g_registry_mtx;
 static uint64_t    g_next_id   = 1;
+gboolean ufo_handle_test_force_alloc_fail = FALSE;
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                            */
@@ -41,7 +43,7 @@ static void entry_free (gpointer data)
     g_free (e);
 }
 
-static void registry_ensure (void)
+static void registry_ensure(void)
 {
     if (g_registry) return;
 
@@ -60,38 +62,97 @@ static void registry_ensure (void)
 /* Public API                                                         */
 /* ------------------------------------------------------------------ */
 
+
+UFO_Handle
+ufo_handle_alloc(gpointer obj, const char *type_name)
+{
+    registry_ensure();
+
+    if (ufo_handle_test_force_alloc_fail) {
+        errno = ENOMEM;
+        return 0;
+    }
+
+    g_return_val_if_fail(G_IS_OBJECT(obj), 0);
+    g_return_val_if_fail(type_name != NULL, 0);
+
+    g_mutex_lock(&g_registry_mtx);
+    const uint64_t id = g_next_id++;
+
+    HandleEntry *e = g_new0(HandleEntry, 1);
+    e->obj = g_object_ref(obj);
+    e->type_name = g_ascii_strdown(type_name, -1);
+    g_hash_table_insert(g_registry, GUINT_TO_POINTER((guintptr) id), e);
+    g_mutex_unlock(&g_registry_mtx);
+
+    return id;
+}
+
+gpointer
+ufo_handle_lookup(UFO_Handle id, const char *expected_lower)
+{
+    registry_ensure();
+
+    g_mutex_lock(&g_registry_mtx);
+    HandleEntry *e = g_hash_table_lookup(g_registry, GUINT_TO_POINTER((guintptr) id));
+    g_mutex_unlock(&g_registry_mtx);
+
+    if (!e)
+        return NULL;
+
+    if (expected_lower && g_ascii_strcasecmp(e->type_name, expected_lower) != 0)
+        return NULL;
+
+    return e->obj;
+}
+
+int
+ufo_handle_free(UFO_Handle id)
+{
+    registry_ensure();
+
+    g_mutex_lock(&g_registry_mtx);
+    gboolean ok = g_hash_table_remove(g_registry, GUINT_TO_POINTER((guintptr) id));
+    g_mutex_unlock(&g_registry_mtx);
+
+    return ok ? 0 : -1;
+}
+
+size_t
+ufo_handle_num_entries(void)
+{
+    return g_registry ? (size_t) g_hash_table_size(g_registry) : 0;
+}
+
 /* Create or wrap a GObject into a MATLAB uint64 handle */
 mxArray *ufoHandle_create (gpointer obj, const char *type_name)
 {
-    registry_ensure ();
+    UFO_Handle id = ufo_handle_alloc(obj, type_name);
 
-    g_return_val_if_fail (G_IS_OBJECT (obj), NULL);
-    g_return_val_if_fail (type_name != NULL, NULL);
-
-    g_mutex_lock (&g_registry_mtx);
-
-    const uint64_t id = g_next_id++;
-
-    HandleEntry *e   = g_new0 (HandleEntry, 1);
-    e->obj           = g_object_ref (obj);
-    e->type_name     = g_ascii_strdown (type_name, -1);   /* normalise */
-
-    g_hash_table_insert (g_registry,
-                         GUINT_TO_POINTER ((guintptr) id),
-                         e);
-
-    g_mutex_unlock (&g_registry_mtx);
-
-    mxArray *arr = mxCreateNumericMatrix (1, 1, mxUINT64_CLASS, mxREAL);
+    mxArray *arr = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
     if (!arr) {
-        /* roll back registry insert */
-        g_mutex_lock (&g_registry_mtx);
-        g_hash_table_remove (g_registry, GUINT_TO_POINTER ((guintptr) id));
-        g_mutex_unlock (&g_registry_mtx);
-        mexErrMsgIdAndTxt ("ufo_mex:AllocFailed", "Failed to allocate MATLAB handle.");
+        ufo_handle_free(id);
+        mexErrMsgIdAndTxt("ufo_mex:AllocFailed", "Failed to allocate MATLAB handle.");
     }
 
-    *(uint64_t *) mxGetData (arr) = id;
+    *(uint64_t *) mxGetData(arr) = id;
+    return arr;
+}
+
+/* Wrap an existing uint64 handle into a MATLAB mxArray and tag it with a
+   MATLAB class name.  This does not allocate or reference a GObject; it only
+   packages the handle value for return to the caller. */
+mxArray *ufoHandle_wrap(UFO_Handle id, const char *class_name)
+{
+    mxArray *arr = mxCreateNumericMatrix(1, 1, mxUINT64_CLASS, mxREAL);
+    if (!arr)
+        mexErrMsgIdAndTxt("ufo_mex:AllocFailed",
+                          "Failed to allocate MATLAB handle.");
+
+    *(uint64_t *) mxGetData(arr) = id;
+    if (class_name && class_name[0] != '\0')
+        mxSetClassName(arr, class_name);
+
     return arr;
 }
 
@@ -112,12 +173,7 @@ void ufoHandle_remove (const mxArray *arr)
 
     const uint64_t id = *(const uint64_t *) mxGetData (arr);
 
-    g_mutex_lock (&g_registry_mtx);
-    gboolean ok = g_hash_table_remove (g_registry,
-                                       GUINT_TO_POINTER ((guintptr) id));
-    g_mutex_unlock (&g_registry_mtx);
-
-    if (!ok)
+    if (ufo_handle_free(id) != 0)
         mexErrMsgIdAndTxt ("ufo_mex:BadHandle",
                            "Handle %" PRIu64 " not found (double free?).", id);
 }
