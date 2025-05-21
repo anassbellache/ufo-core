@@ -2,7 +2,6 @@ classdef TestPluginManager < matlab.unittest.TestCase
     %TESTPLUGINMANAGER Validate ufo.PluginManager behaviour
     methods(Test)
         function listPlugins(testCase)
-
             % PM-01: Plugin paths valid -> listPlugins returns non-empty
             pm = ufo.PluginManager();
             names = pm.listPlugins();
