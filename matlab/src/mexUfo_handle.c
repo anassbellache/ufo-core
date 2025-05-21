@@ -3,14 +3,16 @@
  * One uint64 key  ↔  one GObject*  (+ type tag string)
  *
  *  – safe on 64-bit MATLAB, O(1) lookup
- *  – automatic final clean-up via explicit init/shutdown
+ *  – automatic final clean-up via mexUfo_handle_shutdown
  */
 
+#include "ufo_mex_api.h"
 #include "mexUfo_handle.h"
 #include <mex.h>
 #include <glib-object.h>
 #include <errno.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 /* ------------------------------------------------------------------ */
 /* Registry structures                                                */
@@ -43,14 +45,17 @@ static void entry_free (gpointer data)
 
 static void registry_ensure(void)
 {
-    if (g_registry)
-        return;
+    if (g_registry) return;
 
-    g_mutex_init(&g_registry_mtx);
-    g_registry = g_hash_table_new_full(g_direct_hash,
-                                       g_direct_equal,
-                                       NULL,
-                                       entry_free);
+    g_mutex_init (&g_registry_mtx);
+
+    /* Direct hash/equal treat key as pointer-sized scalar – fine on 64-bit */
+    g_registry = g_hash_table_new_full (g_direct_hash,
+                                        g_direct_equal,
+                                        NULL,           /* key not separately allocated */
+                                        entry_free);
+
+    /* cleanup performed in mexUfo_handle_shutdown() */
 }
 
 /* ------------------------------------------------------------------ */
@@ -151,6 +156,12 @@ mxArray *ufoHandle_wrap(UFO_Handle id, const char *class_name)
     return arr;
 }
 
+/* Backwards compatibility wrapper taking raw handle */
+mxArray *createUfoHandle (UFO_Handle handle, const char *className)
+{
+    return ufoHandle_create ((gpointer)(uintptr_t) handle, className);
+}
+
 /* Remove & unref */
 void ufoHandle_remove (const mxArray *arr)
 {
@@ -209,32 +220,23 @@ UfoTaskGraph     *ufoHandle_getTaskGraph    (const mxArray *arr)
 UfoBaseScheduler *ufoHandle_getScheduler    (const mxArray *arr)
 { return UFO_BASE_SCHEDULER (lookup (arr, "scheduler")->obj); }
 
-UfoTask *ufoHandle_getTask(const mxArray *arr)
-{ return UFO_TASK(lookup(arr, "task")->obj); }
+UfoTask *ufoHandle_getTask (const mxArray *arr)
+{ return UFO_TASK (lookup (arr, "task")->obj); }
 
-UfoResources *ufoHandle_getResources(const mxArray *arr)
-{ return UFO_RESOURCES(lookup(arr, "resources")->obj); }
+UfoResources *ufoHandle_getResources (const mxArray *arr)
+{ return UFO_RESOURCES (lookup (arr, "resources")->obj); }
 
-/* Init/cleanup ---------------------------------------------------- */
-
-void mexUfo_handle_shutdown(void);
-
-void mexUfo_handle_init(void)
+/* API entry points for initialisation/cleanup */
+void mexUfo_handle_init (void)
 {
-    static gboolean at_exit_registered = FALSE;
-    registry_ensure();
-    if (!at_exit_registered) {
-        mexAtExit(mexUfo_handle_shutdown);
-        at_exit_registered = TRUE;
-    }
+    registry_ensure ();
 }
 
-void mexUfo_handle_shutdown(void)
+void mexUfo_handle_shutdown (void)
 {
-    if (!g_registry)
-        return;
-    g_hash_table_destroy(g_registry);
-    g_registry = NULL;
-    g_mutex_clear(&g_registry_mtx);
-    g_next_id = 1;
+    if (g_registry) {
+        g_hash_table_destroy (g_registry);
+        g_registry = NULL;
+        g_mutex_clear (&g_registry_mtx);
+    }
 }

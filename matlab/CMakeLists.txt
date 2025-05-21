@@ -35,10 +35,10 @@ pkg_check_modules(UFO REQUIRED ufo>=0.12)
 # 3.  Source lists  ( **updated** )
 # ---------------------------------------------------------------------------
 set(MEX_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
-set(MEX_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 file(GLOB_RECURSE MEX_SRC   "${MEX_DIR}/*.c")
-file(GLOB_RECURSE API_HDR   "${MEX_INC_DIR}/*.h")
+list(REMOVE_ITEM MEX_SRC "${MEX_DIR}/ufo_dispatch.c")
+file(GLOB_RECURSE API_HDR   "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 
 if (MEX_SRC STREQUAL "")
     message(FATAL_ERROR
@@ -54,7 +54,8 @@ add_library(ufo_mex SHARED ${MEX_SRC} ${API_HDR})
 target_include_directories(ufo_mex PRIVATE
         ${Matlab_INCLUDE_DIRS}
         ${UFO_INCLUDE_DIRS}
-        "${MEX_INC_DIR}")
+        "${MEX_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # Needed by every MEX source
 target_compile_definitions(ufo_mex PRIVATE MATLAB_MEX_FILE)
