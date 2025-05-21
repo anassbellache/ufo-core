@@ -57,22 +57,6 @@ static void registry_ensure(void)
 /* Public API                                                         */
 /* ------------------------------------------------------------------ */
 
-void
-mexUfo_handle_init(void)
-{
-    registry_ensure();
-}
-
-void
-mexUfo_handle_shutdown(void)
-{
-    if (g_registry) {
-        g_hash_table_destroy(g_registry);
-        g_registry = NULL;
-        g_mutex_clear(&g_registry_mtx);
-        g_next_id = 1;
-    }
-}
 
 UFO_Handle
 ufo_handle_alloc(gpointer obj, const char *type_name)
@@ -216,9 +200,16 @@ UfoResources *ufoHandle_getResources(const mxArray *arr)
 
 /* Init/cleanup ---------------------------------------------------- */
 
+void mexUfo_handle_shutdown(void);
+
 void mexUfo_handle_init(void)
 {
+    static gboolean at_exit_registered = FALSE;
     registry_ensure();
+    if (!at_exit_registered) {
+        mexAtExit(mexUfo_handle_shutdown);
+        at_exit_registered = TRUE;
+    }
 }
 
 void mexUfo_handle_shutdown(void)
@@ -228,4 +219,5 @@ void mexUfo_handle_shutdown(void)
     g_hash_table_destroy(g_registry);
     g_registry = NULL;
     g_mutex_clear(&g_registry_mtx);
+    g_next_id = 1;
 }
