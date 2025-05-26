@@ -30,6 +30,9 @@ static mexFunctionPtr find_verb(const char *name) {
         {"PluginManager_getTask", UFO_pm_getTask},
         {"PluginManager_listPlugins", PluginManager_list_mex},
         {"PluginManager_new",  UFO_pm_new},
+        {"Resources_delete",   UFO_res_delete},
+        {"Resources_free",     UFO_res_delete}, // alias
+        {"Resources_new",      UFO_res_new},
         {"Scheduler_delete",   UFO_sched_delete},
         {"Scheduler_free",     UFO_sched_delete}, // alias
         {"Scheduler_getResources", UFO_sched_getResources},
@@ -48,6 +51,7 @@ static mexFunctionPtr find_verb(const char *name) {
         {"TaskGraph_new",      UFO_tg_new},
         {"TaskGraph_run",      UFO_tg_run},
         {"TaskGraph_saveToFile", UFO_tg_saveToFile},
+        {"Task_free",        UFO_task_delete},
         {"mexVersion",         NULL}
     };
     const size_t n = sizeof(table)/sizeof(table[0]);
