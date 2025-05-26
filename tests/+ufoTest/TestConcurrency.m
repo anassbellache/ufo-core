@@ -2,48 +2,69 @@ classdef TestConcurrency < matlab.unittest.TestCase
     %TESTCONCURRENCY Exercises multi-worker behaviour of bindings
     methods(Test)
         function twoPluginManagers(testCase)
-            % CC-01 two MATLAB workers create PluginManager in parallel
-            if isempty(ver('parallel'))
-                testCase.assumeFail('Parallel Computing Toolbox required');
-            end
-
             pool = gcp('nocreate');
-            needsClose = false;
-            if isempty(pool) || pool.NumWorkers < 2
-                pool = parpool(2); %#ok<NASGU>
-                needsClose = true;
-            end
-            cleanup = onCleanup(@() conditionalDelete(pool, needsClose)); %#ok<NASGU>
+            hasPCT = ~isempty(ver('parallel'));
+            testCase.assumeTrue(hasPCT, 'Parallel Computing Toolbox required');
 
-            f = parallel.FevalFuture.empty(2,0);
-            for idx = 1:2
-                f(idx) = parfeval(@createPM, 1);
+            if isempty(pool)
+                pool = parpool(2);
+                cleanup = onCleanup(@() delete(pool)); %#ok<NASGU>
+            elseif pool.NumWorkers < 2
+                delete(pool);
+                pool = parpool(2);
+                cleanup = onCleanup(@() delete(pool)); %#ok<NASGU>
             end
-            results = fetchOutputs(f);
-            testCase.verifyTrue(all([results{:}]));
+
+            f1 = parfeval(pool, @TestConcurrency.createPMOnWorker, 1);
+            f2 = parfeval(pool, @TestConcurrency.createPMOnWorker, 1);
+
+            ok1 = fetchOutputs(f1);
+            ok2 = fetchOutputs(f2);
+
+            testCase.verifyTrue(ok1 && ok2, ...
+                'PluginManager could not be created concurrently');
         end
         function schedulerBusy(testCase)
             % CC-03 ensure Scheduler reports busy when run is called twice
             pm = ufo.PluginManager();
             tg = ufo.TaskGraph();
-            tg.addNode(pm.getTask("read"));
+            a = pm.getTask('read');
+            b = pm.getTask('write');
+            idA = tg.addNode(a);
+            idB = tg.addNode(b);
+            tg.connect(idA, idB);
             sched = ufo.Scheduler();
 
-            if ~ismethod(sched, 'runAsync')
-                testCase.assumeFail('Scheduler.runAsync not available');
-            end
-
             try
-                fut = sched.runAsync(tg); %#ok<NASGU>
+                sched.runAsync(tg);
             catch ME
                 if strcmp(ME.identifier, 'ufo_mex:NotImplemented')
-                    testCase.assumeFail('runAsync MEX command not implemented');
+                    testCase.assumeFail('Scheduler_runAsync not implemented');
                 else
                     rethrow(ME);
                 end
             end
 
-            testCase.verifyError(@() sched.runAsync(tg), 'ufo:Scheduler:Busy');
+            testCase.verifyError(@() sched.run(tg), 'ufo:Scheduler:Busy');
+
+            if ismethod(sched, 'stop')
+                sched.stop();
+            end
+            delete(sched);
+            delete(tg);
+            delete(pm);
+        end
+    end
+
+    methods(Static, Access = private)
+        function ok = createPMOnWorker
+            try
+                pm = ufo.PluginManager();
+                ok = isvalid(pm);
+                delete(pm);
+            catch
+                ok = false;
+            end
         end
     end
 end
