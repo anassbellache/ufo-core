@@ -372,3 +372,34 @@ void UFO_buf_getSize(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     UfoBuffer *buf = ufoHandle_getBuffer(prhs[1]);
     plhs[0] = mxCreateDoubleScalar((double)ufo_buffer_get_size(buf));
 }
+
+// --------------- Resources Commands ---------------
+
+void UFO_res_new(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    if (nlhs != 1 || nrhs != 1)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_res_new: Usage: res = UFO_res_new()");
+    GError *err = NULL;
+    UfoResources *res = ufo_resources_new(&err);
+    if (err)
+        mexErrMsgIdAndTxt("ufo_mex:ResourcesNew", "%s", err->message);
+    plhs[0] = ufoHandle_create(res, "Resources");
+    if (err) g_error_free(err);
+}
+
+void UFO_res_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    if (nlhs != 0 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_res_delete: Usage: UFO_res_delete(resHandle)");
+    UfoResources *res = ufoHandle_getResources(prhs[1]);
+    g_object_unref(res);
+    ufoHandle_remove(prhs[1]);
+}
+
+// --------------- Task Commands ---------------
+
+void UFO_task_delete(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
+    if (nlhs != 0 || nrhs != 2)
+        mexErrMsgIdAndTxt("ufo_mex:BadArg", "UFO_task_delete: Usage: UFO_task_delete(taskHandle)");
+    UfoTask *task = ufoHandle_getTask(prhs[1]);
+    g_object_unref(task);
+    ufoHandle_remove(prhs[1]);
+}
