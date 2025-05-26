@@ -2,7 +2,6 @@ classdef TestConcurrency < matlab.unittest.TestCase
     %TESTCONCURRENCY Exercises multi-worker behaviour of bindings
     methods(Test)
         function twoPluginManagers(testCase)
-            % CC-01 two MATLAB workers create PluginManager in parallel
             pool = gcp('nocreate');
             hasPCT = ~isempty(ver('parallel'));
             testCase.assumeTrue(hasPCT, 'Parallel Computing Toolbox required');
@@ -68,4 +67,16 @@ classdef TestConcurrency < matlab.unittest.TestCase
             end
         end
     end
+end
+
+function tf = createPM
+pm = ufo.PluginManager();
+tf = isa(pm, 'ufo.PluginManager');
+delete(pm);
+end
+
+function conditionalDelete(poolObj, doDelete)
+if doDelete
+    delete(poolObj);
+end
 end
