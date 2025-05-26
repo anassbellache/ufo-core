@@ -68,4 +68,28 @@ classdef TestConcurrency < matlab.unittest.TestCase
             end
         end
     end
+
+    methods(Static, Access = private)
+        function ok = createPMOnWorker
+            try
+                pm = ufo.PluginManager();
+                ok = isvalid(pm);
+                delete(pm);
+            catch
+                ok = false;
+            end
+        end
+    end
+end
+
+function tf = createPM
+pm = ufo.PluginManager();
+tf = isa(pm, 'ufo.PluginManager');
+delete(pm);
+end
+
+function conditionalDelete(poolObj, doDelete)
+if doDelete
+    delete(poolObj);
+end
 end
